@@ -34,3 +34,16 @@ Gen. code: v.1
   - 100K static lights => 2.721 s;
   - 1M static lights => 17.556 s.
 
+
+--------------------------------------------------------
+
+Gen. code: v.1
+
+But using System.arraycopy() for static lights
+
+  - 1K static lights => 0.064 s (avg. for 20: 0.04730 s);
+  - 10K static lights => 0.327 s (avg. for 20: 0.48545 s);
+  - 100K static lights => 2.721 s;
+  - 1M static lights => 17.556 s.
+
+Seems, nothing changed :(

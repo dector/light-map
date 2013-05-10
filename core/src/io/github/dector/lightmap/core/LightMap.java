@@ -159,7 +159,7 @@ public class LightMap {
 		}
 
 		if (dirty) {
-			clearArray(lightValues);
+//			clearArray(lightValues);
 			applyStaticLights();
 			applyDynamicLights();
 			setMaxOneInArray(lightValues);
@@ -194,7 +194,7 @@ public class LightMap {
 			recountLight(staticLightsValues, p, l);
 		}
 
-		setMaxOneInArray(staticLightsValues);
+//		setMaxOneInArray(staticLightsValues);
 
 		staticDirty = false;
 	}
@@ -208,7 +208,7 @@ public class LightMap {
 			recountLight(dynamicLightsValues, p.first, p.second);
 		}
 
-		setMaxOneInArray(dynamicLightsValues);
+//		setMaxOneInArray(dynamicLightsValues);
 
 		dynamicDirty = false;
 	}
@@ -242,15 +242,15 @@ public class LightMap {
 	}
 
 	private void applyStaticLights() {
-		/*for (int x = 0; x < width; x++) {
-			System.arraycopy(staticLightsValues[x], 0, lightValues[x], 0, width);
-		}*/
-
 		for (int x = 0; x < width; x++) {
+			System.arraycopy(staticLightsValues[x], 0, lightValues[x], 0, height);
+		}
+
+		/*for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				lightValues[x][y] += staticLightsValues[x][y];
 			}
-		}
+		}*/
 	}
 
 	private void applyDynamicLights() {
