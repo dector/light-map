@@ -1,8 +1,6 @@
 package io.github.dector.lightmap.core;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,6 +26,14 @@ public class LightMap {
 		staticLights = new HashMap<Position, Light>();
 	}
 
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
 	public float getLightValueAt(int x, int y) {
 		return lightValues[x][y];
 	}
@@ -44,6 +50,16 @@ public class LightMap {
 		staticLights.put(pos, light);
 
 		recountStaticLights();
+	}
+
+	public Position[] getStaticLightsPositions() {
+		Position[] pos = new Position[staticLights.size()];
+		staticLights.keySet().toArray(pos);
+		return pos;
+	}
+
+	public int getStaticLightsCount() {
+		return staticLights.size();
 	}
 
 	private void recountStaticLights() {
