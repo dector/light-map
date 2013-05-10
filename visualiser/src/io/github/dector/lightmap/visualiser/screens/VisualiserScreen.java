@@ -28,6 +28,9 @@ public class VisualiserScreen extends AbstractScreen {
 	private static final float MIN_ZOOM = 0.5f;
 	private static final float MAX_ZOOM = Math.min(TILE_W, TILE_H);
 
+	public static final Position FIRST_TILE_POS = new Position();
+	public static final Position LAST_TILE_POS = new Position();
+
 	private LightMap map;
 
 	private SpriteBatch batch;
@@ -96,6 +99,9 @@ public class VisualiserScreen extends AbstractScreen {
 			playerPos.set(10, 10);
 			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
 		}
+
+		FIRST_TILE_POS.set(0, 0);
+		LAST_TILE_POS.set(map.getWidth() - 1, map.getHeight() - 1);
 
 		centerMap();
 	}
@@ -302,7 +308,7 @@ public class VisualiserScreen extends AbstractScreen {
 		if (p != null) {
 			return p;
 		} else {
-			return LightMap.FIRST_TILE_POS;
+			return FIRST_TILE_POS;
 		}
 	}
 
@@ -312,7 +318,7 @@ public class VisualiserScreen extends AbstractScreen {
 		if (p != null) {
 			return p;
 		} else {
-			return LightMap.LAST_TILE_POS;
+			return LAST_TILE_POS;
 		}
 	}
 
