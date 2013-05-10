@@ -10,6 +10,9 @@ public class LightMap {
 
 	public static final boolean MEASURE_UPDATE = true;
 
+	public static final Position FIRST_TILE_POS = new Position();
+	public static final Position LAST_TILE_POS = new Position();
+
 	private Map<Position, Light> staticLights;
 	private Map<Integer, Pair<Position, Light>> dynamicLights;
 	private int lastDynamicId = 0;
@@ -27,6 +30,9 @@ public class LightMap {
 	public LightMap(int width, int height) {
 		this.width = width;
 		this.height = height;
+
+		FIRST_TILE_POS.set(0, 0);
+		LAST_TILE_POS.set(width - 1, height - 1);
 
 		lightValues = new float[width][height];
 		staticLightsValues = new float[width][height];

@@ -11,6 +11,11 @@ public class Position {
 	public Position() {
 	}
 
+	public Position(Position pos) {
+		this.x = pos.x;
+		this.y = pos.y;
+	}
+
 	public Position(int x, int y) {
 		this.x = x;
 		this.y = y;
@@ -18,6 +23,11 @@ public class Position {
 
 	public static Position from(int x, int y) {
 		return new Position(x, y);
+	}
+
+	public void set(int x, int y) {
+		this.x = x;
+		this.y = y;
 	}
 
 	@Override

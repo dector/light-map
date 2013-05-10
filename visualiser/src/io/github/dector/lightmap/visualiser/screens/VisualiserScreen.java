@@ -44,8 +44,7 @@ public class VisualiserScreen extends AbstractScreen {
 	private boolean affectLights;
 
 	private int dynamicLightId;
-	private int playerX;
-	private int playerY;
+	private Position playerPos;
 
 	public VisualiserScreen() {
 		batch = new SpriteBatch();
@@ -62,6 +61,8 @@ public class VisualiserScreen extends AbstractScreen {
 
 		affectLights = true;
 
+		playerPos = new Position();
+
 		if (LightMap.MEASURE_UPDATE) {
 			// Update time test
 			int w = 1000;
@@ -72,12 +73,11 @@ public class VisualiserScreen extends AbstractScreen {
 			Random rnd = new Random();
 
 			for (int i = 0; i < 1000; i++) {
-				map.addStaticLight(new Light(rnd.nextInt(10)), rnd.nextInt(w), rnd.nextInt(h));
+				map.addStaticLight(new Light(rnd.nextInt(20)), rnd.nextInt(w), rnd.nextInt(h));
 			}
 
-			playerX = 10;
-			playerY = 10;
-			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
+			playerPos.set(10, 10);
+			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
 		} else {
 			// TODO mockup
 			int w = 25;
@@ -93,12 +93,9 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(Light.lightCircle(3), 5, 20);
 			map.addStaticLight(Light.lightSquare(3), 13, 20);
 
-			playerX = 10;
-			playerY = 10;
-			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
+			playerPos.set(10, 10);
+			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
 		}
-
-
 
 		centerMap();
 	}
@@ -122,15 +119,20 @@ public class VisualiserScreen extends AbstractScreen {
 		batch.begin();
 		batch.setColor(1, 1, 1, 1);
 
+		Position fromTile = getTilePositionAtOrFirst(0, 0);
+		Position toTile = getTilePositionAtOrLast(getWidth() + TILE_W, getHeight() + TILE_H);
+
 		// Draw tiles
-		for (int i = 0; i < map.getWidth(); i++) {
-			for (int j = 0; j < map.getHeight(); j++) {
+		for (int i = fromTile.x; i < toTile.x; i++) {
+			for (int j = fromTile.y; j < toTile.y; j++) {
 				draw(tileTex, i, j);
 			}
 		}
 
 		// Draw lights
 		for (Position p : map.getStaticLightsPositions()) {
+			if (isTileOutOfRange(p, fromTile, toTile)) continue;
+
 			if (map.getStaticLightAt(p).isOn()) {
 				draw(lightSourceOnTex, p.x, p.y);
 			} else {
@@ -139,12 +141,14 @@ public class VisualiserScreen extends AbstractScreen {
 		}
 
 		// Draw player
-		draw(playerTex, playerX, playerY);
+		if (! isTileOutOfRange(playerPos, fromTile, toTile)) {
+			draw(playerTex, playerPos.x, playerPos.y);
+		}
 
 		// Draw darkness
 		if (affectLights) {
-			for (int i = 0; i < map.getWidth(); i++) {
-				for (int j = 0; j < map.getHeight(); j++) {
+			for (int i = fromTile.x; i < toTile.x; i++) {
+				for (int j = fromTile.y; j < toTile.y; j++) {
 					batch.setColor(1, 1, 1, 1 - map.getLightValueAt(i, j));
 					draw(darkTex, i, j);
 				}
@@ -205,30 +209,30 @@ public class VisualiserScreen extends AbstractScreen {
 				centerMap();
 				break;
 			case Keys.RIGHT:
-				playerX += 1;
+				playerPos.x += 1;
 				movePlayer();
 				// map.moveDynamicLight(dynamicLightId, 1, 0);
 				break;
 			case Keys.LEFT:
-				playerX -= 1;
+				playerPos.x -= 1;
 				movePlayer();
 				// map.moveDynamicLight(dynamicLightId, -1, 0);
 				break;
 			case Keys.UP:
-				playerY += 1;
+				playerPos.y += 1;
 				movePlayer();
 				// map.moveDynamicLight(dynamicLightId, 0, 1);
 				break;
 			case Keys.DOWN:
-				playerY -= 1;
+				playerPos.y -= 1;
 				movePlayer();
 				// map.moveDynamicLight(dynamicLightId, 0, -1);
 				break;
 			case Keys.R:
 				Random rnd = new Random();
 
-				playerX = rnd.nextInt(map.getWidth());
-				playerY = rnd.nextInt(map.getHeight());
+				playerPos.set(rnd.nextInt(map.getWidth()),
+						rnd.nextInt(map.getHeight()));
 
 				movePlayer();
 				break;
@@ -243,17 +247,17 @@ public class VisualiserScreen extends AbstractScreen {
 	}
 
 	private void movePlayer() {
-		if (playerX < 0)
-			playerX = 0;
-		else if (playerX >= map.getWidth())
-			playerX = map.getWidth() - 1;
+		if (playerPos.x < 0)
+			playerPos.x = 0;
+		else if (playerPos.x >= map.getWidth())
+			playerPos.x = map.getWidth() - 1;
 
-		if (playerY < 0)
-			playerY = 0;
-		else if (playerY >= map.getHeight())
-			playerY = map.getHeight() - 1;
+		if (playerPos.y < 0)
+			playerPos.y = 0;
+		else if (playerPos.y >= map.getHeight())
+			playerPos.y = map.getHeight() - 1;
 
-		map.setDynamicLightTo(dynamicLightId, playerX, playerY);
+		map.setDynamicLightTo(dynamicLightId, playerPos.x, playerPos.y);
 	}
 
 	private long lastClickTime;
@@ -287,8 +291,39 @@ public class VisualiserScreen extends AbstractScreen {
 
 	private final Vector3 tmpVec3 = new Vector3();
 
+	private boolean isTileOutOfRange(Position tilePos, Position from, Position to) {
+		return tilePos.x < from.x || tilePos.y < from.y
+				|| tilePos.x > to.x || tilePos.y > to.y;
+	}
+
+	private Position getTilePositionAtOrFirst(int screenX, int screenY) {
+		Position p = getTilePositionAt(screenX, screenY, false);
+
+		if (p != null) {
+			return p;
+		} else {
+			return LightMap.FIRST_TILE_POS;
+		}
+	}
+
+	private Position getTilePositionAtOrLast(int screenX, int screenY) {
+		Position p = getTilePositionAt(screenX, screenY, false);
+
+		if (p != null) {
+			return p;
+		} else {
+			return LightMap.LAST_TILE_POS;
+		}
+	}
+
 	private Position getTilePositionAt(int screenX, int screenY) {
-		tmpVec3.set(screenX, screenY, 0);
+		return getTilePositionAt(screenX, screenY, true);
+	}
+
+	private Position getTilePositionAt(int screenX, int screenY, boolean mouseCoords) {
+		tmpVec3.x = screenX;
+		tmpVec3.y = (mouseCoords) ? screenY : getHeight() - screenY - 1;
+
 		cam.unproject(tmpVec3);
 
 		int tileX = (int) tmpVec3.x / TILE_W;
@@ -319,26 +354,25 @@ public class VisualiserScreen extends AbstractScreen {
 
 		Position tilePos = getTilePositionAt(mouseX, mouseY);
 
-		boolean lightChanged = false;
+		boolean changeInner = Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)
+				|| Gdx.input.isKeyPressed(Keys.SHIFT_RIGHT);
 
-		if (tilePos != null) {
-			Light l = map.getStaticLightAt(tilePos);
+		boolean changeOuter = Gdx.input.isKeyPressed(Keys.CONTROL_LEFT)
+				|| Gdx.input.isKeyPressed(Keys.CONTROL_RIGHT);
 
-			if (l != null) {
-				boolean changeInner = Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)
-						|| Gdx.input.isKeyPressed(Keys.SHIFT_RIGHT);
+		if (changeInner || changeOuter) {
+			if (tilePos != null) {
+				Light l = map.getStaticLightAt(tilePos);
 
-				if (changeInner) {
-					map.changeStaticLightAt(tilePos, l.innerRadius - amount, l.outerRadius);
-				} else {
-					map.changeStaticLightAt(tilePos, l.innerRadius, l.outerRadius - amount);
+				if (l != null) {
+					if (changeInner) {
+						map.changeStaticLightAt(tilePos, l.innerRadius - amount, l.outerRadius);
+					} else if (changeOuter) {
+						map.changeStaticLightAt(tilePos, l.innerRadius, l.outerRadius - amount);
+					}
 				}
-
-				lightChanged = true;
 			}
-		}
-
-		if (! lightChanged) {
+		} else {
 			if (amount < 0) {
 				cam.zoom /= 2;
 			} else {
