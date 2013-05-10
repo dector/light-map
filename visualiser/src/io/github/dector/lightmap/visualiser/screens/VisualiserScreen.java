@@ -18,6 +18,11 @@ import static com.badlogic.gdx.Input.Keys;
  */
 public class VisualiserScreen extends AbstractScreen {
 
+	private static final int MIN_TILE_W = 4;
+	private static final int MIN_TILE_H = 4;
+	private static final int MAX_TILE_W = 64;
+	private static final int MAX_TILE_H = 64;
+
 	private LightMap map;
 
 	private SpriteBatch sb;
@@ -31,6 +36,8 @@ public class VisualiserScreen extends AbstractScreen {
 	private boolean affectLights;
 	private int startX;
 	private int startY;
+	private int tileW;
+	private int tileH;
 
 	public VisualiserScreen() {
 		sb = new SpriteBatch();
@@ -43,6 +50,8 @@ public class VisualiserScreen extends AbstractScreen {
 		font = AssetsLoader.loadFont("visitor.ttf", 18);
 
 		affectLights = true;
+		tileW = 32;
+		tileH = 32;
 
 		// TODO mockup
 		{
@@ -98,7 +107,7 @@ public class VisualiserScreen extends AbstractScreen {
 	}
 
 	private void draw(TextureRegion reg, int x, int y) {
-		sb.draw(reg, startX + x * 32, startY + y * 32, 32, 32);
+		sb.draw(reg, startX + x * tileW, startY + y * tileH, tileW, tileH);
 	}
 
 	private String getInfoString() {
@@ -163,8 +172,8 @@ public class VisualiserScreen extends AbstractScreen {
 	}
 
 	private Position getTilePositionAt(int screenX, int screenY) {
-		int tileX = (screenX - startX) / 32;
-		int tileY = (getHeight() - screenY - 1 - startY) / 32;
+		int tileX = (screenX - startX) / tileH;
+		int tileY = (getHeight() - screenY - 1 - startY) / tileH;
 
 		if (0 <= tileX && tileX < map.getWidth()
 				&& 0 <= tileY && tileY < map.getHeight()) {
@@ -194,6 +203,24 @@ public class VisualiserScreen extends AbstractScreen {
 			if (l != null) {
 				map.removeStaticLightAt(tilePos);
 				map.addStaticLight(new Light(l.radius - amount), tilePos);
+			} else {
+				if (amount < 0) {
+					tileW *= 2;
+					tileH *= 2;
+				} else {
+					tileW /= 2;
+					tileH /= 2;
+				}
+
+				if (tileW < MIN_TILE_W)
+					tileW = MIN_TILE_W;
+				if (tileW > MAX_TILE_W)
+					tileW = MAX_TILE_W;
+
+				if (tileH < MIN_TILE_H)
+					tileH = MIN_TILE_H;
+				if (tileH > MAX_TILE_H)
+					tileH = MAX_TILE_H;
 			}
 		}
 
