@@ -160,9 +160,9 @@ public class LightMap {
 
 		if (dirty) {
 //			clearArray(lightValues);
-			applyStaticLights();
+//			applyStaticLights();
 			applyDynamicLights();
-			setMaxOneInArray(lightValues);
+//			setMaxOneInArray(lightValues);
 		}
 
 		if (MEASURE_UPDATE) {
@@ -256,7 +256,10 @@ public class LightMap {
 	private void applyDynamicLights() {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				lightValues[x][y] += dynamicLightsValues[x][y];
+				lightValues[x][y] = staticLightsValues[x][y] + dynamicLightsValues[x][y];
+
+				if (lightValues[x][y] > 1)
+					lightValues[x][y] = 1;
 			}
 		}
 	}

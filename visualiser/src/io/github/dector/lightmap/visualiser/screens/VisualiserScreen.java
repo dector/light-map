@@ -47,6 +47,7 @@ public class VisualiserScreen extends AbstractScreen {
 	private boolean affectLights;
 
 	private int dynamicLightId;
+	private int otherDynamicLightsCount;
 	private Position playerPos;
 
 	public VisualiserScreen() {
@@ -81,6 +82,11 @@ public class VisualiserScreen extends AbstractScreen {
 
 			playerPos.set(10, 10);
 			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
+
+			otherDynamicLightsCount = 100;
+			for (int i = 0; i < otherDynamicLightsCount; i++) {
+				map.addDynamicLight(new Light(rnd.nextInt(50)), new Position(rnd.nextInt(w), rnd.nextInt(h)));
+			}
 		} else {
 			// TODO mockup
 			int w = 25;
@@ -198,6 +204,7 @@ public class VisualiserScreen extends AbstractScreen {
 		sbuilder.append("[F3] to center map\n");
 		sbuilder.append("[Arrows] to move player\n");
 		sbuilder.append("[R] to put player in random position\n");
+		sbuilder.append("[T] to put dynamic lights in random positions\n");
 
 		return sbuilder.toString();
 	}
@@ -241,6 +248,13 @@ public class VisualiserScreen extends AbstractScreen {
 						rnd.nextInt(map.getHeight()));
 
 				movePlayer();
+				break;
+			case Keys.T:
+				rnd = new Random();
+
+				for (int i = 0; i < otherDynamicLightsCount; i++) {
+					map.setDynamicLightTo(i + 1, rnd.nextInt(map.getWidth()), rnd.nextInt(map.getHeight()));
+				}
 				break;
 			case Keys.F10:
 				if (LightMap.MEASURE_UPDATE) {
