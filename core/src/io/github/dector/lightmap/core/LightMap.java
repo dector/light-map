@@ -9,15 +9,18 @@ import java.util.Map;
 public class LightMap {
 
 	private Map<Position, Light> staticLights;
+	private Map<Integer, Pair<Position, Light>> dynamicLights;
+	private int lastDynamicId = 0;
 
 	private float[][] staticLightsValues;
+	private float[][] dynamicLightsValues;
 	private float[][] lightValues;
 
 	private int width;
 	private int height;
 
 	private boolean staticDirty;
-	private boolean dynamicDirty; // NOT IMPLEMENTED !!!
+	private boolean dynamicDirty;
 
 	public LightMap(int width, int height) {
 		this.width = width;
@@ -25,8 +28,10 @@ public class LightMap {
 
 		lightValues = new float[width][height];
 		staticLightsValues = new float[width][height];
+		dynamicLightsValues = new float[width][height];
 
 		staticLights = new HashMap<Position, Light>();
+		dynamicLights = new HashMap<Integer, Pair<Position, Light>>();
 	}
 
 	public int getWidth() {
@@ -55,14 +60,19 @@ public class LightMap {
 		markStaticDirty();
 	}
 
+	public int addDynamicLight(Light light, Position pos) {
+		Pair<Position, Light> pair = new Pair<Position, Light>(pos, light);
+		dynamicLights.put(lastDynamicId, pair);
+
+		markDynamicDirty();
+
+		return lastDynamicId++;
+	}
+
 	public void removeStaticLightAt(Position p) {
 		staticLights.remove(p);
 
 		markStaticDirty();
-	}
-
-	private void markStaticDirty() {
-		staticDirty = true;
 	}
 
 	public Position[] getStaticLightsPositions() {
@@ -99,55 +109,107 @@ public class LightMap {
 		return staticLights.size();
 	}
 
+	public void setDynamicLightTo(int id, int x, int y) {
+		if (! dynamicLights.containsKey(id)) return;
+
+		Pair<Position, Light> pair = dynamicLights.get(id);
+		pair.first.x = x;
+		pair.first.y = y;
+
+		markDynamicDirty();
+	}
+
+	public void moveDynamicLight(int id, int dx, int dy) {
+		if (! dynamicLights.containsKey(id)) return;
+
+		Pair<Position, Light> pair = dynamicLights.get(id);
+		pair.first.x += dx;
+		pair.first.y += dy;
+
+		markDynamicDirty();
+	}
+
+	public void step() {
+		boolean dirty = false;
+
+		if (staticDirty) {
+			recountStaticLights();
+
+			dirty = true;
+		}
+
+		if (dynamicDirty) {
+			recountDynamicLights();
+
+			dirty = true;
+		}
+
+		if (dirty) {
+			clearArray(lightValues);
+			applyStaticLights();
+			applyDynamicLights();
+			setMaxOneInArray(lightValues);
+		}
+	}
+
+	private void markStaticDirty() {
+		staticDirty = true;
+	}
+
+	private void markDynamicDirty() {
+		dynamicDirty = true;
+	}
+
 	private void recountStaticLights() {
 		clearArray(staticLightsValues);
 
 		for (Position p : staticLights.keySet()) {
 			Light l = staticLights.get(p);
 
-			int x = p.x;
-			int y = p.y;
-
-			int r = l.radius;
-			int fromX 	= Math.max(x - r, 0);
-			int toX 	= Math.min(x + r, width - 1);
-			int fromY 	= Math.max(y - r, 0);
-			int toY 	= Math.min(y + r, height - 1);
-
-			for (int i = fromX; i <= toX; i++) {
-				for (int j = fromY; j <= toY; j++) {
-					int dx = x - i;
-					int dy = y - j;
-
-					float dd = (float) Math.sqrt(dx * dx + dy * dy);
-
-					if (dd <= r) {
-						float lightVal = (float) Math.pow(1 - dd / r, 1.4f);
-						staticLightsValues[i][j] += lightVal;
-					}
-				}
-			}
+			recountLight(staticLightsValues, p, l);
 		}
 
 		setMaxOneInArray(staticLightsValues);
+
+		staticDirty = false;
 	}
 
-	public void step() {
-		boolean dirty = staticDirty || dynamicDirty;
+	private void recountDynamicLights() {
+		clearArray(dynamicLightsValues);
 
-		if (staticDirty) {
-			recountStaticLights();
+		for (int id : dynamicLights.keySet()) {
+			Pair<Position, Light> p = dynamicLights.get(id);
+
+			recountLight(dynamicLightsValues, p.first, p.second);
 		}
 
-		if (dynamicDirty) {
-			// ...
-		}
+		setMaxOneInArray(dynamicLightsValues);
 
-		if (dirty) {
-			clearArray(lightValues);
-			applyStaticLights();
-			// applyDynamicLight();
-			setMaxOneInArray(lightValues);
+		dynamicDirty = false;
+	}
+
+	private void recountLight(float[][] lightValues, Position p, Light l) {
+		int x = p.x;
+		int y = p.y;
+
+		int r = l.radius;
+		int fromX 	= Math.max(x - r, 0);
+		int toX 	= Math.min(x + r, width - 1);
+		int fromY 	= Math.max(y - r, 0);
+		int toY 	= Math.min(y + r, height - 1);
+
+		for (int i = fromX; i <= toX; i++) {
+			for (int j = fromY; j <= toY; j++) {
+				int dx = x - i;
+				int dy = y - j;
+
+				float dd = (float) Math.sqrt(dx * dx + dy * dy);
+
+				if (dd <= r) {
+					float lightVal = (float) Math.pow(1 - dd / r, 1.4f);
+					lightValues[i][j] += lightVal;
+				}
+			}
 		}
 	}
 
@@ -155,6 +217,14 @@ public class LightMap {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				lightValues[x][y] += staticLightsValues[x][y];
+			}
+		}
+	}
+
+	private void applyDynamicLights() {
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				lightValues[x][y] += dynamicLightsValues[x][y];
 			}
 		}
 	}

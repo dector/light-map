@@ -13,6 +13,8 @@ import io.github.dector.lightmap.core.LightMap;
 import io.github.dector.lightmap.core.Position;
 import io.github.dector.lightmap.visualiser.assets.AssetsLoader;
 
+import java.util.Random;
+
 import static com.badlogic.gdx.Input.Keys;
 
 /**
@@ -34,11 +36,16 @@ public class VisualiserScreen extends AbstractScreen {
 	private TextureRegion lightSourceOnTex;
 	private TextureRegion lightSourceOffTex;
 	private TextureRegion tileTex;
+	private TextureRegion playerTex;
 	private TextureRegion darkTex;
 
 	private BitmapFont font;
 
 	private boolean affectLights;
+
+	private int dynamicLightId;
+	private int playerX;
+	private int playerY;
 
 	public VisualiserScreen() {
 		batch = new SpriteBatch();
@@ -48,6 +55,7 @@ public class VisualiserScreen extends AbstractScreen {
 		lightSourceOnTex = AssetsLoader.loadImageFileAsRegion("lightSource_on.png", 32, 32);
 		lightSourceOffTex = AssetsLoader.loadImageFileAsRegion("lightSource_off.png", 32, 32);
 		tileTex = AssetsLoader.loadImageFileAsRegion("tile.png", 32, 32);
+		playerTex = AssetsLoader.loadImageFileAsRegion("player.png", 32, 32);
 		darkTex = AssetsLoader.loadImageFileAsRegion("dark.png", 32, 32);
 
 		font = AssetsLoader.loadFont("visitor.ttf", 18);
@@ -64,6 +72,10 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(new Light(4), 9, 5);
 			map.addStaticLight(new Light(6), 16, 8);
 			map.addStaticLight(new Light(5), 6, 15);
+
+			playerX = 10;
+			playerY = 10;
+			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
 		}
 
 		centerMap();
@@ -103,6 +115,9 @@ public class VisualiserScreen extends AbstractScreen {
 				draw(lightSourceOffTex, p.x, p.y);
 			}
 		}
+
+		// Draw player
+		draw(playerTex, playerX, playerY);
 
 		// Draw darkness
 		if (affectLights) {
@@ -149,6 +164,8 @@ public class VisualiserScreen extends AbstractScreen {
 		sbuilder.append("Scroll elsewhere to zoom\n");
 		sbuilder.append("[F2] to toggle darkness\n");
 		sbuilder.append("[F3] to center map\n");
+		sbuilder.append("[Arrows] to move player\n");
+		sbuilder.append("[R] to put player in random position\n");
 
 		return sbuilder.toString();
 	}
@@ -164,6 +181,30 @@ public class VisualiserScreen extends AbstractScreen {
 				break;
 			case Keys.F3:
 				centerMap();
+				break;
+			case Keys.RIGHT:
+				playerX += 1;
+				map.moveDynamicLight(dynamicLightId, 1, 0);
+				break;
+			case Keys.LEFT:
+				playerX -= 1;
+				map.moveDynamicLight(dynamicLightId, -1, 0);
+				break;
+			case Keys.UP:
+				playerY += 1;
+				map.moveDynamicLight(dynamicLightId, 0, 1);
+				break;
+			case Keys.DOWN:
+				playerY -= 1;
+				map.moveDynamicLight(dynamicLightId, 0, -1);
+				break;
+			case Keys.R:
+				Random rnd = new Random();
+
+				playerX = rnd.nextInt(map.getWidth());
+				playerY = rnd.nextInt(map.getHeight());
+
+				map.setDynamicLightTo(dynamicLightId, playerX, playerY);
 				break;
 		}
 

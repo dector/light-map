@@ -16,6 +16,10 @@ public class Position {
 		this.y = y;
 	}
 
+	public static Position from(int x, int y) {
+		return new Position(x, y);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -34,5 +38,10 @@ public class Position {
 		int result = x;
 		result = 31 * result + y;
 		return result;
+	}
+
+	@Override
+	public String toString() {
+		return x + ":" + y;
 	}
 }
