@@ -2,10 +2,12 @@ package io.github.dector.lightmap.visualiser.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import io.github.dector.lightmap.core.Light;
 import io.github.dector.lightmap.core.LightMap;
 import io.github.dector.lightmap.core.Position;
@@ -18,14 +20,17 @@ import static com.badlogic.gdx.Input.Keys;
  */
 public class VisualiserScreen extends AbstractScreen {
 
-	private static final int MIN_TILE_W = 4;
-	private static final int MIN_TILE_H = 4;
-	private static final int MAX_TILE_W = 64;
-	private static final int MAX_TILE_H = 64;
+	private static final int TILE_W = 32;
+	private static final int TILE_H = 32;
+
+	private static final float MIN_ZOOM = 0.5f;
+	private static final float MAX_ZOOM = 4;
 
 	private LightMap map;
 
-	private SpriteBatch sb;
+	private SpriteBatch batch;
+	private SpriteBatch hudBatch;
+	private OrthographicCamera cam;
 	private TextureRegion lightSourceOnTex;
 	private TextureRegion lightSourceOffTex;
 	private TextureRegion tileTex;
@@ -34,13 +39,11 @@ public class VisualiserScreen extends AbstractScreen {
 	private BitmapFont font;
 
 	private boolean affectLights;
-	private int startX;
-	private int startY;
-	private int tileW;
-	private int tileH;
 
 	public VisualiserScreen() {
-		sb = new SpriteBatch();
+		batch = new SpriteBatch();
+		hudBatch = new SpriteBatch();
+		cam = new OrthographicCamera();
 
 		lightSourceOnTex = AssetsLoader.loadImageFileAsRegion("lightSource_on.png", 32, 32);
 		lightSourceOffTex = AssetsLoader.loadImageFileAsRegion("lightSource_off.png", 32, 32);
@@ -50,8 +53,6 @@ public class VisualiserScreen extends AbstractScreen {
 		font = AssetsLoader.loadFont("visitor.ttf", 18);
 
 		affectLights = true;
-		tileW = 32;
-		tileH = 32;
 
 		// TODO mockup
 		{
@@ -64,6 +65,16 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(new Light(6), 16, 8);
 			map.addStaticLight(new Light(5), 6, 15);
 		}
+
+		cam.position.set(map.getWidth() * TILE_W / 2, map.getHeight() * TILE_H / 2, 0);
+	}
+
+	@Override
+	public void resize(int width, int height) {
+		super.resize(width, height);
+
+		cam.viewportWidth = width;
+		cam.viewportHeight = height;
 	}
 
 	@Override
@@ -72,8 +83,10 @@ public class VisualiserScreen extends AbstractScreen {
 
 		map.step();
 
-		sb.begin();
-		sb.setColor(1, 1, 1, 1);
+		cam.update();
+		batch.setProjectionMatrix(cam.combined);
+		batch.begin();
+		batch.setColor(1, 1, 1, 1);
 
 		// Draw tiles
 		for (int i = 0; i < map.getWidth(); i++) {
@@ -95,19 +108,21 @@ public class VisualiserScreen extends AbstractScreen {
 		if (affectLights) {
 			for (int i = 0; i < map.getWidth(); i++) {
 				for (int j = 0; j < map.getHeight(); j++) {
-					sb.setColor(1, 1, 1, 1 - map.getLightValueAt(i, j));
+					batch.setColor(1, 1, 1, 1 - map.getLightValueAt(i, j));
 					draw(darkTex, i, j);
 				}
 			}
 		}
 
-		font.drawMultiLine(sb, getInfoString(), 10, getHeight() - 10);
+		batch.end();
 
-		sb.end();
+		hudBatch.begin();
+		font.drawMultiLine(hudBatch, getInfoString(), 10, getHeight() - 10);
+		hudBatch.end();
 	}
 
 	private void draw(TextureRegion reg, int x, int y) {
-		sb.draw(reg, startX + x * tileW, startY + y * tileH, tileW, tileH);
+		batch.draw(reg, x * TILE_W, y * TILE_H, TILE_W, TILE_H);
 	}
 
 	private String getInfoString() {
@@ -126,6 +141,8 @@ public class VisualiserScreen extends AbstractScreen {
 		sbuilder.append("\n");
 		sbuilder.append("Drag map with mouse\n");
 		sbuilder.append("Doubleclick to add/remove light\n");
+		sbuilder.append("Scroll on light to change radius\n");
+		sbuilder.append("Scroll elsewhere to zoom\n");
 		sbuilder.append("[F2] to toggle darkness\n");
 
 		return sbuilder.toString();
@@ -153,6 +170,9 @@ public class VisualiserScreen extends AbstractScreen {
 		long time = System.currentTimeMillis();
 		long diffTime = time - lastClickTime;
 
+		tmpVec3.set(screenX, screenY, 0);
+		cam.unproject(tmpVec3);
+
 		if (diffTime < 200) {
 			Position tilePos = getTilePositionAt(screenX, screenY);
 
@@ -171,9 +191,14 @@ public class VisualiserScreen extends AbstractScreen {
 		return true;
 	}
 
+	private final Vector3 tmpVec3 = new Vector3();
+
 	private Position getTilePositionAt(int screenX, int screenY) {
-		int tileX = (screenX - startX) / tileH;
-		int tileY = (getHeight() - screenY - 1 - startY) / tileH;
+		tmpVec3.set(screenX, screenY, 0);
+		cam.unproject(tmpVec3);
+
+		int tileX = (int) tmpVec3.x / TILE_W;
+		int tileY = (int) tmpVec3.y / TILE_H;
 
 		if (0 <= tileX && tileX < map.getWidth()
 				&& 0 <= tileY && tileY < map.getHeight()) {
@@ -185,8 +210,8 @@ public class VisualiserScreen extends AbstractScreen {
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		startX += screenX - dragPointStart.x;
-		startY -= screenY - dragPointStart.y;
+		cam.position.x -= (screenX - dragPointStart.x) * cam.zoom;
+		cam.position.y += (screenY - dragPointStart.y) * cam.zoom;
 
 		dragPointStart.set(screenX, screenY);
 
@@ -195,7 +220,12 @@ public class VisualiserScreen extends AbstractScreen {
 
 	@Override
 	public boolean scrolled(int amount) {
-		Position tilePos = getTilePositionAt(Gdx.input.getX(), Gdx.input.getY());
+		int mouseX = Gdx.input.getX();
+		int mouseY = Gdx.input.getY();
+
+		Position tilePos = getTilePositionAt(mouseX, mouseY);
+
+		boolean lightChanged = false;
 
 		if (tilePos != null) {
 			Light l = map.getStaticLightAt(tilePos);
@@ -203,25 +233,21 @@ public class VisualiserScreen extends AbstractScreen {
 			if (l != null) {
 				map.removeStaticLightAt(tilePos);
 				map.addStaticLight(new Light(l.radius - amount), tilePos);
-			} else {
-				if (amount < 0) {
-					tileW *= 2;
-					tileH *= 2;
-				} else {
-					tileW /= 2;
-					tileH /= 2;
-				}
-
-				if (tileW < MIN_TILE_W)
-					tileW = MIN_TILE_W;
-				if (tileW > MAX_TILE_W)
-					tileW = MAX_TILE_W;
-
-				if (tileH < MIN_TILE_H)
-					tileH = MIN_TILE_H;
-				if (tileH > MAX_TILE_H)
-					tileH = MAX_TILE_H;
+				lightChanged = true;
 			}
+		}
+
+		if (! lightChanged) {
+			if (amount < 0) {
+				cam.zoom /= 2;
+			} else {
+				cam.zoom *= 2;
+			}
+
+			if (cam.zoom < MIN_ZOOM)
+				cam.zoom = MIN_ZOOM;
+			else if (cam.zoom > MAX_ZOOM)
+				cam.zoom = MAX_ZOOM;
 		}
 
 		return true;
