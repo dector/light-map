@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public class LightMap {
 
-	private static final boolean MEASURE_UPDATE = false;
+	public static final boolean MEASURE_UPDATE = true;
 
 	private Map<Position, Light> staticLights;
 	private Map<Integer, Pair<Position, Light>> dynamicLights;
@@ -137,6 +137,8 @@ public class LightMap {
 	}
 
 	private long measureStartTime;
+	private double hardMeasureTimeSum;
+	private int hardMeasureCount;
 
 	public void step() {
 		if (MEASURE_UPDATE)
@@ -166,8 +168,12 @@ public class LightMap {
 		if (MEASURE_UPDATE) {
 			float measureTime = (float) (System.currentTimeMillis() - measureStartTime) / 1000;
 
-			if (measureTime >= 0.001f)
-				System.out.printf("Update time: %.3f s\n", measureTime);
+			if (measureTime >= 0.001f) {
+				hardMeasureTimeSum += measureTime;
+				hardMeasureCount++;
+
+				System.out.printf("%d. Update time: %.3f s\n", hardMeasureCount, measureTime);
+			}
 		}
 	}
 
@@ -236,6 +242,10 @@ public class LightMap {
 	}
 
 	private void applyStaticLights() {
+		/*for (int x = 0; x < width; x++) {
+			System.arraycopy(staticLightsValues[x], 0, lightValues[x], 0, width);
+		}*/
+
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				lightValues[x][y] += staticLightsValues[x][y];
@@ -282,5 +292,13 @@ public class LightMap {
 		}
 
 		System.out.println(sb.toString());
+	}
+
+	public float getAvgHardUpdateTime() {
+		if (MEASURE_UPDATE) {
+			return (float) (hardMeasureTimeSum / hardMeasureCount);
+		} else {
+			return 0;
+		}
 	}
 }

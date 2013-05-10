@@ -62,8 +62,24 @@ public class VisualiserScreen extends AbstractScreen {
 
 		affectLights = true;
 
-		// TODO mockup
-		{
+		if (LightMap.MEASURE_UPDATE) {
+			// Update time test
+			int w = 1000;
+			int h = 1000;
+
+			map = new LightMap(w, h);
+
+			Random rnd = new Random();
+
+			for (int i = 0; i < 1000; i++) {
+				map.addStaticLight(new Light(rnd.nextInt(10)), rnd.nextInt(w), rnd.nextInt(h));
+			}
+
+			playerX = 10;
+			playerY = 10;
+			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
+		} else {
+			// TODO mockup
 			int w = 25;
 			int h = 25;
 
@@ -82,23 +98,7 @@ public class VisualiserScreen extends AbstractScreen {
 			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
 		}
 
-		// Update time test
-		/*{
-			int w = 1000;
-			int h = 1000;
 
-			map = new LightMap(w, h);
-
-			Random rnd = new Random();
-
-			for (int i = 0; i < 10000; i++) {
-				map.addStaticLight(new Light(rnd.nextInt(10)), rnd.nextInt(w), rnd.nextInt(h));
-			}
-
-			playerX = 10;
-			playerY = 10;
-			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
-		}*/
 
 		centerMap();
 	}
@@ -231,6 +231,11 @@ public class VisualiserScreen extends AbstractScreen {
 				playerY = rnd.nextInt(map.getHeight());
 
 				movePlayer();
+				break;
+			case Keys.F10:
+				if (LightMap.MEASURE_UPDATE) {
+					System.out.printf("Avg. `hard` lightmap update time: %.5f s\n", map.getAvgHardUpdateTime());
+				}
 				break;
 		}
 

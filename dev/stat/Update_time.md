@@ -29,8 +29,8 @@ Tests
 
 Gen. code: v.1
 
-  - 1K static lights => 0.071 s;
-  - 10K static lights => 0.343 s;
+  - 1K static lights => 0.071 s (avg. for 20: 0.04850 s);
+  - 10K static lights => 0.343 s (avg. for 20: 0.38340 s);
   - 100K static lights => 2.721 s;
   - 1M static lights => 17.556 s.
 
