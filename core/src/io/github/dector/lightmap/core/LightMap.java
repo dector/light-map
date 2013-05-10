@@ -81,6 +81,11 @@ public class LightMap {
 		return pos;
 	}
 
+	public void changeStaticLightAt(Position p, int innerRadius, int outerRadius) {
+		removeStaticLightAt(p);
+		addStaticLight(new Light(innerRadius, outerRadius), p);
+	}
+
 	public boolean hasStaticLightAt(int x, int y) {
 		return hasStaticLightAt(new Position(x, y));
 	}
@@ -192,11 +197,12 @@ public class LightMap {
 		int x = p.x;
 		int y = p.y;
 
-		int r = l.radius;
-		int fromX 	= Math.max(x - r, 0);
-		int toX 	= Math.min(x + r, width - 1);
-		int fromY 	= Math.max(y - r, 0);
-		int toY 	= Math.min(y + r, height - 1);
+		int inR = l.innerRadius;
+		int outR = l.outerRadius;
+		int fromX 	= Math.max(x - outR, 0);
+		int toX 	= Math.min(x + outR, width - 1);
+		int fromY 	= Math.max(y - outR, 0);
+		int toY 	= Math.min(y + outR, height - 1);
 
 		for (int i = fromX; i <= toX; i++) {
 			for (int j = fromY; j <= toY; j++) {
@@ -205,8 +211,10 @@ public class LightMap {
 
 				float dd = (float) Math.sqrt(dx * dx + dy * dy);
 
-				if (dd <= r) {
-					float lightVal = (float) Math.pow(1 - dd / r, 1.4f);
+				if (dd <= inR) {
+					lightValues[i][j] = 1;
+				} else if (dd <= outR) {
+					float lightVal = (float) Math.pow(1 - dd / outR, 1.4f);
 					lightValues[i][j] += lightVal;
 				}
 			}

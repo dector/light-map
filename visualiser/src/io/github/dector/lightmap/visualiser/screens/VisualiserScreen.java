@@ -73,6 +73,10 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(new Light(6), 16, 8);
 			map.addStaticLight(new Light(5), 6, 15);
 
+			map.addStaticLight(new Light(2, 5), 20, 18);
+			map.addStaticLight(Light.lightCircle(3), 5, 20);
+			map.addStaticLight(Light.lightSquare(3), 13, 20);
+
 			playerX = 10;
 			playerY = 10;
 			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
@@ -184,19 +188,23 @@ public class VisualiserScreen extends AbstractScreen {
 				break;
 			case Keys.RIGHT:
 				playerX += 1;
-				map.moveDynamicLight(dynamicLightId, 1, 0);
+				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 1, 0);
 				break;
 			case Keys.LEFT:
 				playerX -= 1;
-				map.moveDynamicLight(dynamicLightId, -1, 0);
+				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, -1, 0);
 				break;
 			case Keys.UP:
 				playerY += 1;
-				map.moveDynamicLight(dynamicLightId, 0, 1);
+				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 0, 1);
 				break;
 			case Keys.DOWN:
 				playerY -= 1;
-				map.moveDynamicLight(dynamicLightId, 0, -1);
+				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 0, -1);
 				break;
 			case Keys.R:
 				Random rnd = new Random();
@@ -204,11 +212,25 @@ public class VisualiserScreen extends AbstractScreen {
 				playerX = rnd.nextInt(map.getWidth());
 				playerY = rnd.nextInt(map.getHeight());
 
-				map.setDynamicLightTo(dynamicLightId, playerX, playerY);
+				movePlayer();
 				break;
 		}
 
 		return true;
+	}
+
+	private void movePlayer() {
+		if (playerX < 0)
+			playerX = 0;
+		else if (playerX >= map.getWidth())
+			playerX = map.getWidth() - 1;
+
+		if (playerY < 0)
+			playerY = 0;
+		else if (playerY >= map.getHeight())
+			playerY = map.getHeight() - 1;
+
+		map.setDynamicLightTo(dynamicLightId, playerX, playerY);
 	}
 
 	private long lastClickTime;
@@ -280,8 +302,15 @@ public class VisualiserScreen extends AbstractScreen {
 			Light l = map.getStaticLightAt(tilePos);
 
 			if (l != null) {
-				map.removeStaticLightAt(tilePos);
-				map.addStaticLight(new Light(l.radius - amount), tilePos);
+				boolean changeInner = Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)
+						|| Gdx.input.isKeyPressed(Keys.SHIFT_RIGHT);
+
+				if (changeInner) {
+					map.changeStaticLightAt(tilePos, l.innerRadius - amount, l.outerRadius);
+				} else {
+					map.changeStaticLightAt(tilePos, l.innerRadius, l.outerRadius - amount);
+				}
+
 				lightChanged = true;
 			}
 		}
