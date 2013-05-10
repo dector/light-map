@@ -5,17 +5,13 @@ package io.github.dector.lightmap.core;
  */
 public class Light {
 
-	private int radius;
+	public final int radius;
 
 	public Light(int radius) {
-		this.radius = radius;
+		this.radius = (radius >= -1) ? radius : -1;
 	}
 
-	public int getRadius() {
-		return radius;
-	}
-
-	public void setRadius(int radius) {
-		this.radius = radius;
+	public final boolean isOn() {
+		return radius >= 0;
 	}
 }

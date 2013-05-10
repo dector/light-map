@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import io.github.dector.lightmap.core.Light;
 import io.github.dector.lightmap.core.LightMap;
 import io.github.dector.lightmap.core.Position;
@@ -20,18 +21,22 @@ public class VisualiserScreen extends AbstractScreen {
 	private LightMap map;
 
 	private SpriteBatch sb;
-	private TextureRegion lightSourceTex;
+	private TextureRegion lightSourceOnTex;
+	private TextureRegion lightSourceOffTex;
 	private TextureRegion tileTex;
 	private TextureRegion darkTex;
 
 	private BitmapFont font;
 
 	private boolean affectLights;
+	private int startX;
+	private int startY;
 
 	public VisualiserScreen() {
 		sb = new SpriteBatch();
 
-		lightSourceTex = AssetsLoader.loadImageFileAsRegion("lightSource.png", 32, 32);
+		lightSourceOnTex = AssetsLoader.loadImageFileAsRegion("lightSource_on.png", 32, 32);
+		lightSourceOffTex = AssetsLoader.loadImageFileAsRegion("lightSource_off.png", 32, 32);
 		tileTex = AssetsLoader.loadImageFileAsRegion("tile.png", 32, 32);
 		darkTex = AssetsLoader.loadImageFileAsRegion("dark.png", 32, 32);
 
@@ -41,12 +46,14 @@ public class VisualiserScreen extends AbstractScreen {
 
 		// TODO mockup
 		{
-			int w = 8;
-			int h = 8;
+			int w = 25;
+			int h = 25;
 
 			map = new LightMap(w, h);
 			map.addStaticLight(new Light(3), 5, 5);
-			map.step();
+			map.addStaticLight(new Light(4), 9, 5);
+			map.addStaticLight(new Light(6), 16, 8);
+			map.addStaticLight(new Light(5), 6, 15);
 		}
 	}
 
@@ -54,20 +61,25 @@ public class VisualiserScreen extends AbstractScreen {
 	public void render(float delta) {
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 
-		sb.begin();
+		map.step();
 
+		sb.begin();
 		sb.setColor(1, 1, 1, 1);
 
 		// Draw tiles
 		for (int i = 0; i < map.getWidth(); i++) {
 			for (int j = 0; j < map.getHeight(); j++) {
-				sb.draw(tileTex, i * 32, j * 32, 32, 32);
+				draw(tileTex, i, j);
 			}
 		}
 
 		// Draw lights
 		for (Position p : map.getStaticLightsPositions()) {
-			sb.draw(lightSourceTex, p.x * 32, p.y * 32, 32, 32);
+			if (map.getStaticLightAt(p).isOn()) {
+				draw(lightSourceOnTex, p.x, p.y);
+			} else {
+				draw(lightSourceOffTex, p.x, p.y);
+			}
 		}
 
 		// Draw darkness
@@ -75,7 +87,7 @@ public class VisualiserScreen extends AbstractScreen {
 			for (int i = 0; i < map.getWidth(); i++) {
 				for (int j = 0; j < map.getHeight(); j++) {
 					sb.setColor(1, 1, 1, 1 - map.getLightValueAt(i, j));
-					sb.draw(darkTex, i * 32, j * 32, 32, 32);
+					draw(darkTex, i, j);
 				}
 			}
 		}
@@ -83,6 +95,10 @@ public class VisualiserScreen extends AbstractScreen {
 		font.drawMultiLine(sb, getInfoString(), 10, getHeight() - 10);
 
 		sb.end();
+	}
+
+	private void draw(TextureRegion reg, int x, int y) {
+		sb.draw(reg, startX + x * 32, startY + y * 32, 32, 32);
 	}
 
 	private String getInfoString() {
@@ -98,6 +114,9 @@ public class VisualiserScreen extends AbstractScreen {
 				.append(map.getStaticLightsCount())
 				.append("\n");
 
+		sbuilder.append("\n");
+		sbuilder.append("Drag map with mouse\n");
+		sbuilder.append("Doubleclick to add/remove light\n");
 		sbuilder.append("[F2] to toggle darkness\n");
 
 		return sbuilder.toString();
@@ -112,6 +131,70 @@ public class VisualiserScreen extends AbstractScreen {
 			case Keys.F2:
 				affectLights = !affectLights;
 				break;
+		}
+
+		return true;
+	}
+
+	private long lastClickTime;
+	private Vector2 dragPointStart = new Vector2();
+
+	@Override
+	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		long time = System.currentTimeMillis();
+		long diffTime = time - lastClickTime;
+
+		if (diffTime < 200) {
+			Position tilePos = getTilePositionAt(screenX, screenY);
+
+			if (tilePos != null) {
+				if (map.hasStaticLightAt(tilePos)) {
+					map.removeStaticLightAt(tilePos);
+				} else {
+					map.addStaticLight(new Light(3), tilePos);
+				}
+			}
+		}
+
+		lastClickTime = time;
+		dragPointStart.set(screenX, screenY);
+
+		return true;
+	}
+
+	private Position getTilePositionAt(int screenX, int screenY) {
+		int tileX = (screenX - startX) / 32;
+		int tileY = (getHeight() - screenY - 1 - startY) / 32;
+
+		if (0 <= tileX && tileX < map.getWidth()
+				&& 0 <= tileY && tileY < map.getHeight()) {
+			return new Position(tileX, tileY);
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public boolean touchDragged(int screenX, int screenY, int pointer) {
+		startX += screenX - dragPointStart.x;
+		startY -= screenY - dragPointStart.y;
+
+		dragPointStart.set(screenX, screenY);
+
+		return true;
+	}
+
+	@Override
+	public boolean scrolled(int amount) {
+		Position tilePos = getTilePositionAt(Gdx.input.getX(), Gdx.input.getY());
+
+		if (tilePos != null) {
+			Light l = map.getStaticLightAt(tilePos);
+
+			if (l != null) {
+				map.removeStaticLightAt(tilePos);
+				map.addStaticLight(new Light(l.radius - amount), tilePos);
+			}
 		}
 
 		return true;

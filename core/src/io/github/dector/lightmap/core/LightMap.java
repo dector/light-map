@@ -52,10 +52,40 @@ public class LightMap {
 		recountStaticLights();
 	}
 
+	public void removeStaticLightAt(Position p) {
+		staticLights.remove(p);
+
+		recountStaticLights();
+	}
+
 	public Position[] getStaticLightsPositions() {
 		Position[] pos = new Position[staticLights.size()];
 		staticLights.keySet().toArray(pos);
 		return pos;
+	}
+
+	public boolean hasStaticLightAt(int x, int y) {
+		return hasStaticLightAt(new Position(x, y));
+	}
+
+	public boolean hasStaticLightAt(Position pos) {
+		boolean found = false;
+
+		for (Position p : getStaticLightsPositions()) {
+			if (p.equals(pos)) {
+				found = true;
+			}
+		}
+
+		return found;
+	}
+
+	public Light getStaticLightAt(Position p) {
+		if (staticLights.containsKey(p)) {
+			return staticLights.get(p);
+		} else {
+			return null;
+		}
 	}
 
 	public int getStaticLightsCount() {
@@ -71,7 +101,7 @@ public class LightMap {
 			int x = p.x;
 			int y = p.y;
 
-			int r = l.getRadius();
+			int r = l.radius;
 			int fromX 	= Math.max(x - r, 0);
 			int toX 	= Math.min(x + r, width - 1);
 			int fromY 	= Math.max(y - r, 0);
