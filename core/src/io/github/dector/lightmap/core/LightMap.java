@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public class LightMap {
 
-	private static final boolean MEASURE_UPDATE = true;
+	private static final boolean MEASURE_UPDATE = false;
 
 	private Map<Position, Light> staticLights;
 	private Map<Integer, Pair<Position, Light>> dynamicLights;

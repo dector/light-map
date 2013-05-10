@@ -64,7 +64,7 @@ public class VisualiserScreen extends AbstractScreen {
 
 		// TODO mockup
 		{
-			/*int w = 25;
+			int w = 25;
 			int h = 25;
 
 			map = new LightMap(w, h);
@@ -79,11 +79,11 @@ public class VisualiserScreen extends AbstractScreen {
 
 			playerX = 10;
 			playerY = 10;
-			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));*/
+			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
 		}
 
 		// Update time test
-		{
+		/*{
 			int w = 1000;
 			int h = 1000;
 
@@ -98,7 +98,7 @@ public class VisualiserScreen extends AbstractScreen {
 			playerX = 10;
 			playerY = 10;
 			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));
-		}
+		}*/
 
 		centerMap();
 	}
