@@ -66,7 +66,7 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(new Light(5), 6, 15);
 		}
 
-		cam.position.set(map.getWidth() * TILE_W / 2, map.getHeight() * TILE_H / 2, 0);
+		centerMap();
 	}
 
 	@Override
@@ -125,6 +125,10 @@ public class VisualiserScreen extends AbstractScreen {
 		batch.draw(reg, x * TILE_W, y * TILE_H, TILE_W, TILE_H);
 	}
 
+	private void centerMap() {
+		cam.position.set(map.getWidth() * TILE_W / 2, map.getHeight() * TILE_H / 2, 0);
+	}
+
 	private String getInfoString() {
 		StringBuilder sbuilder = new StringBuilder();
 
@@ -144,6 +148,7 @@ public class VisualiserScreen extends AbstractScreen {
 		sbuilder.append("Scroll on light to change radius\n");
 		sbuilder.append("Scroll elsewhere to zoom\n");
 		sbuilder.append("[F2] to toggle darkness\n");
+		sbuilder.append("[F3] to center map\n");
 
 		return sbuilder.toString();
 	}
@@ -156,6 +161,9 @@ public class VisualiserScreen extends AbstractScreen {
 				break;
 			case Keys.F2:
 				affectLights = !affectLights;
+				break;
+			case Keys.F3:
+				centerMap();
 				break;
 		}
 
