@@ -8,6 +8,8 @@ import java.util.Map;
  */
 public class LightMap {
 
+	private static final boolean MEASURE_UPDATE = true;
+
 	private Map<Position, Light> staticLights;
 	private Map<Integer, Pair<Position, Light>> dynamicLights;
 	private int lastDynamicId = 0;
@@ -134,7 +136,12 @@ public class LightMap {
 		markDynamicDirty();
 	}
 
+	private long measureStartTime;
+
 	public void step() {
+		if (MEASURE_UPDATE)
+			measureStartTime = System.currentTimeMillis();
+
 		boolean dirty = false;
 
 		if (staticDirty) {
@@ -154,6 +161,13 @@ public class LightMap {
 			applyStaticLights();
 			applyDynamicLights();
 			setMaxOneInArray(lightValues);
+		}
+
+		if (MEASURE_UPDATE) {
+			float measureTime = (float) (System.currentTimeMillis() - measureStartTime) / 1000;
+
+			if (measureTime >= 0.001f)
+				System.out.printf("Update time: %.3f s\n", measureTime);
 		}
 	}
 

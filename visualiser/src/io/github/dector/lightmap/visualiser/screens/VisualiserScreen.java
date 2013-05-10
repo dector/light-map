@@ -26,7 +26,7 @@ public class VisualiserScreen extends AbstractScreen {
 	private static final int TILE_H = 32;
 
 	private static final float MIN_ZOOM = 0.5f;
-	private static final float MAX_ZOOM = 4;
+	private static final float MAX_ZOOM = Math.min(TILE_W, TILE_H);
 
 	private LightMap map;
 
@@ -64,7 +64,7 @@ public class VisualiserScreen extends AbstractScreen {
 
 		// TODO mockup
 		{
-			int w = 25;
+			/*int w = 25;
 			int h = 25;
 
 			map = new LightMap(w, h);
@@ -76,6 +76,24 @@ public class VisualiserScreen extends AbstractScreen {
 			map.addStaticLight(new Light(2, 5), 20, 18);
 			map.addStaticLight(Light.lightCircle(3), 5, 20);
 			map.addStaticLight(Light.lightSquare(3), 13, 20);
+
+			playerX = 10;
+			playerY = 10;
+			dynamicLightId = map.addDynamicLight(new Light(3), Position.from(playerX, playerY));*/
+		}
+
+		// Update time test
+		{
+			int w = 1000;
+			int h = 1000;
+
+			map = new LightMap(w, h);
+
+			Random rnd = new Random();
+
+			for (int i = 0; i < 10000; i++) {
+				map.addStaticLight(new Light(rnd.nextInt(10)), rnd.nextInt(w), rnd.nextInt(h));
+			}
 
 			playerX = 10;
 			playerY = 10;
