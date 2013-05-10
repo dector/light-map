@@ -16,6 +16,9 @@ public class LightMap {
 	private int width;
 	private int height;
 
+	private boolean staticDirty;
+	private boolean dynamicDirty; // NOT IMPLEMENTED !!!
+
 	public LightMap(int width, int height) {
 		this.width = width;
 		this.height = height;
@@ -49,13 +52,17 @@ public class LightMap {
 	public void addStaticLight(Light light, Position pos) {
 		staticLights.put(pos, light);
 
-		recountStaticLights();
+		markStaticDirty();
 	}
 
 	public void removeStaticLightAt(Position p) {
 		staticLights.remove(p);
 
-		recountStaticLights();
+		markStaticDirty();
+	}
+
+	private void markStaticDirty() {
+		staticDirty = true;
 	}
 
 	public Position[] getStaticLightsPositions() {
@@ -126,9 +133,22 @@ public class LightMap {
 	}
 
 	public void step() {
-		clearArray(lightValues);
-		applyStaticLights();
-		setMaxOneInArray(lightValues);
+		boolean dirty = staticDirty || dynamicDirty;
+
+		if (staticDirty) {
+			recountStaticLights();
+		}
+
+		if (dynamicDirty) {
+			// ...
+		}
+
+		if (dirty) {
+			clearArray(lightValues);
+			applyStaticLights();
+			// applyDynamicLight();
+			setMaxOneInArray(lightValues);
+		}
 	}
 
 	private void applyStaticLights() {
