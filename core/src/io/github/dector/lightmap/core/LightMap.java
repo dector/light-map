@@ -159,10 +159,7 @@ public class LightMap {
 		}
 
 		if (dirty) {
-//			clearArray(lightValues);
-//			applyStaticLights();
-			applyDynamicLights();
-//			setMaxOneInArray(lightValues);
+			applyLights();
 		}
 
 		if (MEASURE_UPDATE) {
@@ -241,19 +238,7 @@ public class LightMap {
 		}
 	}
 
-	private void applyStaticLights() {
-		for (int x = 0; x < width; x++) {
-			System.arraycopy(staticLightsValues[x], 0, lightValues[x], 0, height);
-		}
-
-		/*for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++) {
-				lightValues[x][y] += staticLightsValues[x][y];
-			}
-		}*/
-	}
-
-	private void applyDynamicLights() {
+	private void applyLights() {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				lightValues[x][y] = staticLightsValues[x][y] + dynamicLightsValues[x][y];
@@ -268,16 +253,6 @@ public class LightMap {
 		for (int i = 0; i < a.length; i++) {
 			for (int j = 0; j < a[i].length; j++) {
 				a[i][j] = 0;
-			}
-		}
-	}
-
-	private void setMaxOneInArray(float[][] a) {
-		for (int i = 0; i < a.length; i++) {
-			for (int j = 0; j < a[i].length; j++) {
-				if (a[i][j] > 1) {
-					a[i][j] = 1;
-				}
 			}
 		}
 	}
