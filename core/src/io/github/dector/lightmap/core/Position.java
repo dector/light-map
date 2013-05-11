@@ -5,6 +5,8 @@ package io.github.dector.lightmap.core;
  */
 public class Position {
 
+	public static final Position tmp = new Position();
+
 	public int x;
 	public int y;
 
@@ -28,6 +30,13 @@ public class Position {
 	public void set(int x, int y) {
 		this.x = x;
 		this.y = y;
+	}
+
+	public Position setAndReturn(int x, int y) {
+		this.x = x;
+		this.y = y;
+
+		return this;
 	}
 
 	@Override

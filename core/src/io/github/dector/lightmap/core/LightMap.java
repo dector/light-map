@@ -1,7 +1,6 @@
 package io.github.dector.lightmap.core;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Hear-and-soul of this library. Usage is simple.
@@ -37,10 +36,14 @@ import java.util.Map;
  */
 public class LightMap {
 
+	private static final int GRID_WIDTH = 10;
+	private static final int GRID_HEIGHT = 10;
+
 	public static final boolean MEASURE_UPDATE = true;
 
 	private Map<Position, Light> staticLights;
-	private Map<Integer, Pair<Position, Light>> dynamicLights;
+	private Map<Integer, Pair<Position, Light>> dynamicLightsById;
+	private Map<Position, List<Integer>> dynamicLightsByGridPosition;
 	private int lastDynamicId = 0;
 
 	private float[][] staticLightsValues;
@@ -52,17 +55,45 @@ public class LightMap {
 
 	private boolean staticDirty;
 	private boolean dynamicDirty;
+//	private int[] dynamicDirtyRects;
+
+	private int dynamicGridWidth;
+	private int dynamicGridHeight;
+	private int dynamicGridXCount;
+	private int dynamicGridYCount;
+	private boolean[][] dynamicDirtyGrid;
+//	private int dynamicLastGridX;
+//	private int dynamicLastGridY;
+//	private int dynamicLastGridW;
+//	private int dynamicLastGridH;
 
 	public LightMap(int width, int height) {
 		this.width = width;
 		this.height = height;
+
+		dynamicGridWidth = Math.min(width, GRID_WIDTH);
+		dynamicGridHeight = Math.min(height, GRID_HEIGHT);
+		dynamicGridXCount = width / dynamicGridWidth;
+		dynamicGridYCount = height / dynamicGridHeight;
+		dynamicDirtyGrid = new boolean[dynamicGridXCount][dynamicGridYCount];
+
+//		dynamicLastGridX = width / dynamicGridWidth;
+//		dynamicLastGridY = height / dynamicGridHeight;
+//		dynamicLastGridW = width - dynamicLastGridX * dynamicGridWidth;
+//		dynamicLastGridH = height - dynamicLastGridY * dynamicGridHeight;
 
 		lightValues = new float[width][height];
 		staticLightsValues = new float[width][height];
 		dynamicLightsValues = new float[width][height];
 
 		staticLights = new HashMap<Position, Light>();
-		dynamicLights = new HashMap<Integer, Pair<Position, Light>>();
+		dynamicLightsById = new HashMap<Integer, Pair<Position, Light>>();
+		dynamicLightsByGridPosition = new HashMap<Position, List<Integer>>();
+		for (int i = 0; i < dynamicGridXCount; i++) {
+			for (int j = 0; j < dynamicGridYCount; j++) {
+				dynamicLightsByGridPosition.put(Position.from(i, j), new ArrayList<Integer>());
+			}
+		}
 	}
 
 	public int getWidth() {
@@ -93,11 +124,78 @@ public class LightMap {
 
 	public int addDynamicLight(Light light, Position pos) {
 		Pair<Position, Light> pair = new Pair<Position, Light>(pos, light);
-		dynamicLights.put(lastDynamicId, pair);
 
-		markDynamicDirty();
+		dynamicLightsById.put(lastDynamicId, pair);
+
+		int[] usedRects = getUsedRectsFor(light, pos);
+
+		for (int i = 0; i < usedRects.length; i += 2) {
+			Position gridPos = Position.tmp.setAndReturn(usedRects[i], usedRects[i+1]);
+			System.out.println("adding dynamic light to: " + gridPos + " (" + pos + ")");
+
+			List<Integer> idsMap = dynamicLightsByGridPosition.get(gridPos);
+			idsMap.add(lastDynamicId);
+		}
+
+		markDynamicDirty(usedRects);
+
+//		markDynamicDirty(lastDynamicId);
 
 		return lastDynamicId++;
+	}
+
+	private int[] getUsedRectsFor(Light light, Position pos) {
+		int r = light.outerRadius;
+		int fromX = Math.max(0, pos.x - r);
+		int fromY = Math.max(0, pos.y - r);
+		int toX = Math.min(width - 1, pos.x + r);
+		int toY = Math.min(height - 1, pos.y + r);
+
+		int lX = fromX / dynamicGridWidth;
+		int rX = toX / dynamicGridWidth;
+		int lY = fromY / dynamicGridHeight;
+		int rY = toY / dynamicGridHeight;
+
+		return getDifferent(lX, rX, lY, rY);
+	}
+
+	private int[] getDifferent(int x1, int x2, int y1, int y2) {
+		int length = 0;
+
+		if (x1 == x2 && y1 == y2) {
+			length = 1;
+		} else {
+			length += x2 - x1 + 1;
+			length += y2 - y1 + 1;
+		}
+
+		int[] result = new int[2 * length];
+
+		if (x1 == x2 && y1 == y2) {
+			result[0] = x1;
+			result[1] = y1;
+		} else if (x1 != x2 && y1 == y2) {
+			result[0] = x1;
+			result[1] = y1;
+			result[2] = x1;
+			result[3] = y2;
+		} else if (x1 == x2 && y1 != y2) {
+			result[0] = x1;
+			result[1] = y1;
+			result[2] = x2;
+			result[3] = y1;
+		} else {
+			result[0] = x1;
+			result[1] = y1;
+			result[2] = x2;
+			result[3] = y1;
+			result[4] = x1;
+			result[5] = y2;
+			result[6] = x2;
+			result[7] = y2;
+		}
+
+		return result;
 	}
 
 	public void removeStaticLightAt(Position p) {
@@ -146,23 +244,16 @@ public class LightMap {
 	}
 
 	public void setDynamicLightTo(int id, int x, int y) {
-		if (! dynamicLights.containsKey(id)) return;
+		if (! dynamicLightsById.containsKey(id)) return;
 
-		Pair<Position, Light> pair = dynamicLights.get(id);
+		Pair<Position, Light> pair = dynamicLightsById.get(id);
+
+		markDynamicDirty(getUsedRectsFor(pair.second, pair.first));
+
 		pair.first.x = x;
 		pair.first.y = y;
 
-		markDynamicDirty();
-	}
-
-	public void moveDynamicLight(int id, int dx, int dy) {
-		if (! dynamicLights.containsKey(id)) return;
-
-		Pair<Position, Light> pair = dynamicLights.get(id);
-		pair.first.x += dx;
-		pair.first.y += dy;
-
-		markDynamicDirty();
+		markDynamicDirty(getUsedRectsFor(pair.second, pair.first));
 	}
 
 	private long measureStartTime;
@@ -188,7 +279,10 @@ public class LightMap {
 		}
 
 		if (dirty) {
-			applyLights();
+//			clearArray(lightValues);
+//			applyStaticLights();
+			applyDynamicLights();
+//			setMaxOneInArray(lightValues);
 		}
 
 		if (MEASURE_UPDATE) {
@@ -207,8 +301,13 @@ public class LightMap {
 		staticDirty = true;
 	}
 
-	private void markDynamicDirty() {
+	private void markDynamicDirty(int[] usedRects) {
 		dynamicDirty = true;
+
+		for (int i = 0; i < usedRects.length; i += 2) {
+			dynamicDirtyGrid[usedRects[i]][usedRects[i+1]] = true;
+			System.out.println("marking dirty: " + usedRects[i] + ":" + usedRects[i+1]);
+		}
 	}
 
 	private void recountStaticLights() {
@@ -226,10 +325,17 @@ public class LightMap {
 	private void recountDynamicLights() {
 		clearArray(dynamicLightsValues);
 
-		for (int id : dynamicLights.keySet()) {
-			Pair<Position, Light> p = dynamicLights.get(id);
+		for (int i = 0; i < dynamicGridXCount; i++) {
+			for (int j = 0; j < dynamicGridYCount; j++) {
+				if (dynamicDirtyGrid[i][j]) {
+					List<Integer> list = dynamicLightsByGridPosition.get(Position.tmp.setAndReturn(i, j));
 
-			recountLight(dynamicLightsValues, p.first, p.second);
+					for (int id : list) {
+						Pair<Position, Light> p = dynamicLightsById.get(id);
+						recountLight(dynamicLightsValues, p.first, p.second);
+					}
+				}
+			}
 		}
 
 		dynamicDirty = false;
@@ -263,7 +369,19 @@ public class LightMap {
 		}
 	}
 
-	private void applyLights() {
+	private void applyStaticLights() {
+		for (int x = 0; x < width; x++) {
+			System.arraycopy(staticLightsValues[x], 0, lightValues[x], 0, height);
+		}
+
+		/*for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				lightValues[x][y] += staticLightsValues[x][y];
+			}
+		}*/
+	}
+
+	private void applyDynamicLights() {
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				lightValues[x][y] = staticLightsValues[x][y] + dynamicLightsValues[x][y];
@@ -278,6 +396,16 @@ public class LightMap {
 		for (int i = 0; i < a.length; i++) {
 			for (int j = 0; j < a[i].length; j++) {
 				a[i][j] = 0;
+			}
+		}
+	}
+
+	private void setMaxOneInArray(float[][] a) {
+		for (int i = 0; i < a.length; i++) {
+			for (int j = 0; j < a[i].length; j++) {
+				if (a[i][j] > 1) {
+					a[i][j] = 1;
+				}
 			}
 		}
 	}
