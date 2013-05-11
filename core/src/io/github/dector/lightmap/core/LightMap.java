@@ -4,6 +4,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Hear-and-soul of this library. Usage is simple.
+ * Just create new map, add static and dynamic lights.
+ *
+ * Sample code:
+ *
+ * <code>
+ *	int w = 25;
+ *	int h = 25;
+ *	// 1. Create new map
+ *	map = new LightMap(w, h);
+ *	// 2. Add static lights
+ *	map.addStaticLight(new Light(3), 5, 5);		// Simple circle light with outer radius only
+ *	map.addStaticLight(new Light(4), 9, 5);
+ *	map.addStaticLight(new Light(6), 16, 8);
+ *	map.addStaticLight(new Light(5), 6, 15);
+ *
+ *	map.addStaticLight(new Light(2, 5), 20, 18);		// Simple circle light with outer and inner radiuses
+ *	map.addStaticLight(Light.lightCircle(3), 5, 20);	// Simple circle light, which is fully light on each in-radius tile
+ *	map.addStaticLight(Light.lightSquare(3), 13, 20);	// Simple square light, which is fully light on each in-radius tile
+ *
+ *	// 3. Add dynamic lights
+ *	dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));	// Simple dynamic light
+ *
+ * 	// 4. Update map (each frame)
+ * 	map.step();		// Update dynamic lights
+ * </code>
+ *
+ * You can change static lights in runtime, but it's not recommended yet
+ *
  * @author dector
  */
 public class LightMap {
@@ -191,8 +220,6 @@ public class LightMap {
 			recountLight(staticLightsValues, p, l);
 		}
 
-//		setMaxOneInArray(staticLightsValues);
-
 		staticDirty = false;
 	}
 
@@ -204,8 +231,6 @@ public class LightMap {
 
 			recountLight(dynamicLightsValues, p.first, p.second);
 		}
-
-//		setMaxOneInArray(dynamicLightsValues);
 
 		dynamicDirty = false;
 	}
