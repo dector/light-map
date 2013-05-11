@@ -69,24 +69,24 @@ public class VisualiserScreen extends AbstractScreen {
 
 		if (LightMap.MEASURE_UPDATE) {
 			// Update time test
-			int w = 50;
-			int h = 50;
+			int w = 1000;
+			int h = 1000;
 
 			map = new LightMap(w, h);
 
 			Random rnd = new Random();
 
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 1000; i++) {
 				map.addStaticLight(new Light(rnd.nextInt(20)), rnd.nextInt(w), rnd.nextInt(h));
 			}
 
 			playerPos.set(10, 10);
 			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
 
-			/*otherDynamicLightsCount = 100;
+			otherDynamicLightsCount = 100;
 			for (int i = 0; i < otherDynamicLightsCount; i++) {
 				map.addDynamicLight(new Light(rnd.nextInt(50)), new Position(rnd.nextInt(w), rnd.nextInt(h)));
-			}*/
+			}
 		} else {
 			// TODO mockup
 			int w = 25;
@@ -224,18 +224,22 @@ public class VisualiserScreen extends AbstractScreen {
 			case Keys.RIGHT:
 				playerPos.x += 1;
 				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 1, 0);
 				break;
 			case Keys.LEFT:
 				playerPos.x -= 1;
 				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, -1, 0);
 				break;
 			case Keys.UP:
 				playerPos.y += 1;
 				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 0, 1);
 				break;
 			case Keys.DOWN:
 				playerPos.y -= 1;
 				movePlayer();
+				// map.moveDynamicLight(dynamicLightId, 0, -1);
 				break;
 			case Keys.R:
 				Random rnd = new Random();
