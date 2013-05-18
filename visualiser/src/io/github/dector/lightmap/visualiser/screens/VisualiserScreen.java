@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Vector3;
 import io.github.dector.lightmap.core.Light;
 import io.github.dector.lightmap.core.LightMap;
 import io.github.dector.lightmap.core.Position;
+import io.github.dector.lightmap.utils.RandomMapBuilder;
 import io.github.dector.lightmap.visualiser.assets.AssetsLoader;
 
 import java.util.Random;
@@ -69,24 +70,14 @@ public class VisualiserScreen extends AbstractScreen {
 
 		if (LightMap.MEASURE_UPDATE) {
 			// Update time test
-			int w = 1000;
-			int h = 1000;
+			RandomMapBuilder builder = new RandomMapBuilder()
+					.width(1000).height(1000)
+					.staticCount(1000).staticMaxRadius(20)
+					.player(10, 10).playerMaxRadius(3)
+					.dynamicCount(100).dynamicMaxRadius(50).build();
 
-			map = new LightMap(w, h);
-
-			Random rnd = new Random();
-
-			for (int i = 0; i < 1000; i++) {
-				map.addStaticLight(new Light(rnd.nextInt(20)), rnd.nextInt(w), rnd.nextInt(h));
-			}
-
-			playerPos.set(10, 10);
-			dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
-
-			otherDynamicLightsCount = 100;
-			for (int i = 0; i < otherDynamicLightsCount; i++) {
-				map.addDynamicLight(new Light(rnd.nextInt(50)), new Position(rnd.nextInt(w), rnd.nextInt(h)));
-			}
+			map = builder.getMap();
+			dynamicLightId = builder.getPlayerLightId();
 		} else {
 			// TODO mockup
 			int w = 25;
