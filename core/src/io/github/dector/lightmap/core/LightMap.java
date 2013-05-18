@@ -145,6 +145,10 @@ public class LightMap {
 		return staticLights.size();
 	}
 
+	public int getDynamicLightsCount() {
+		return dynamicLights.size();
+	}
+
 	public void setDynamicLightTo(int id, int x, int y) {
 		if (! dynamicLights.containsKey(id)) return;
 

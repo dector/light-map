@@ -48,8 +48,37 @@ public class VisualiserScreen extends AbstractScreen {
 	private boolean affectLights;
 
 	private int dynamicLightId;
-	private int otherDynamicLightsCount;
 	private Position playerPos;
+
+	private String infoString;
+
+	{
+		StringBuilder sbuilder = new StringBuilder();
+
+		sbuilder.append("Map size: ")
+				.append(map.getWidth())
+				.append("x")
+				.append(map.getHeight())
+				.append("\n");
+
+		sbuilder.append("Static lights: ")
+				.append(map.getStaticLightsCount())
+				.append("\n");
+
+		sbuilder.append("\n");
+		sbuilder.append("[Drag] map with mouse\n");
+		sbuilder.append("[Doubleclick] to add/remove light\n");
+		sbuilder.append("[CTRL + Scroll] on light to change outer radius\n");
+		sbuilder.append("[SHIFT + Scroll] on light to change inner radius\n");
+		sbuilder.append("[Scroll] elsewhere to zoom\n");
+		sbuilder.append("[F2] to toggle darkness\n");
+		sbuilder.append("[F3] to center map\n");
+		sbuilder.append("[Arrows] to move player\n");
+		sbuilder.append("[R] to put player in random position\n");
+		sbuilder.append("[T] to put dynamic lights in random positions\n");
+
+		infoString = sbuilder.toString();
+	}
 
 	public VisualiserScreen() {
 		batch = new SpriteBatch();
@@ -161,7 +190,7 @@ public class VisualiserScreen extends AbstractScreen {
 		batch.end();
 
 		hudBatch.begin();
-		font.drawMultiLine(hudBatch, getInfoString(), 10, getHeight() - 10);
+		font.drawMultiLine(hudBatch, infoString, 10, getHeight() - 10);
 		hudBatch.end();
 	}
 
@@ -171,33 +200,6 @@ public class VisualiserScreen extends AbstractScreen {
 
 	private void centerMap() {
 		cam.position.set(map.getWidth() * TILE_W / 2, map.getHeight() * TILE_H / 2, 0);
-	}
-
-	private String getInfoString() {
-		StringBuilder sbuilder = new StringBuilder();
-
-		sbuilder.append("Map size: ")
-				.append(map.getWidth())
-				.append("x")
-				.append(map.getHeight())
-				.append("\n");
-
-		sbuilder.append("Static lights: ")
-				.append(map.getStaticLightsCount())
-				.append("\n");
-
-		sbuilder.append("\n");
-		sbuilder.append("Drag map with mouse\n");
-		sbuilder.append("Doubleclick to add/remove light\n");
-		sbuilder.append("Scroll on light to change radius\n");
-		sbuilder.append("Scroll elsewhere to zoom\n");
-		sbuilder.append("[F2] to toggle darkness\n");
-		sbuilder.append("[F3] to center map\n");
-		sbuilder.append("[Arrows] to move player\n");
-		sbuilder.append("[R] to put player in random position\n");
-		sbuilder.append("[T] to put dynamic lights in random positions\n");
-
-		return sbuilder.toString();
 	}
 
 	@Override
@@ -243,7 +245,7 @@ public class VisualiserScreen extends AbstractScreen {
 			case Keys.T:
 				rnd = new Random();
 
-				for (int i = 0; i < otherDynamicLightsCount; i++) {
+				for (int i = 0; i < map.getDynamicLightsCount(); i++) {
 					map.setDynamicLightTo(i + 1, rnd.nextInt(map.getWidth()), rnd.nextInt(map.getHeight()));
 				}
 				break;
