@@ -23,8 +23,7 @@ Components
 Usage
 ==========
 
-<code>
-
+```java
     int w = 25;
     int h = 25;
 
@@ -40,5 +39,4 @@ Usage
 
     playerPos.set(10, 10);
     dynamicLightId = map.addDynamicLight(new Light(3), new Position(playerPos));
-
-</code>
+```
