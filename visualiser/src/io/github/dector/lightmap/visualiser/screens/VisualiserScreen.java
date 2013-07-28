@@ -52,34 +52,6 @@ public class VisualiserScreen extends AbstractScreen {
 
 	private String infoString;
 
-	{
-		StringBuilder sbuilder = new StringBuilder();
-
-		sbuilder.append("Map size: ")
-				.append(map.getWidth())
-				.append("x")
-				.append(map.getHeight())
-				.append("\n");
-
-		sbuilder.append("Static lights: ")
-				.append(map.getStaticLightsCount())
-				.append("\n");
-
-		sbuilder.append("\n");
-		sbuilder.append("[Drag] map with mouse\n");
-		sbuilder.append("[Doubleclick] to add/remove light\n");
-		sbuilder.append("[CTRL + Scroll] on light to change outer radius\n");
-		sbuilder.append("[SHIFT + Scroll] on light to change inner radius\n");
-		sbuilder.append("[Scroll] elsewhere to zoom\n");
-		sbuilder.append("[F2] to toggle darkness\n");
-		sbuilder.append("[F3] to center map\n");
-		sbuilder.append("[Arrows] to move player\n");
-		sbuilder.append("[R] to put player in random position\n");
-		sbuilder.append("[T] to put dynamic lights in random positions\n");
-
-		infoString = sbuilder.toString();
-	}
-
 	public VisualiserScreen() {
 		batch = new SpriteBatch();
 		hudBatch = new SpriteBatch();
@@ -129,7 +101,36 @@ public class VisualiserScreen extends AbstractScreen {
 		FIRST_TILE_POS.set(0, 0);
 		LAST_TILE_POS.set(map.getWidth() - 1, map.getHeight() - 1);
 
+		updateInfoString();
 		centerMap();
+	}
+
+	private void updateInfoString() {
+		StringBuilder sbuilder = new StringBuilder();
+
+		sbuilder.append("Map size: ")
+				.append(map.getWidth())
+				.append("x")
+				.append(map.getHeight())
+				.append("\n");
+
+		sbuilder.append("Static lights: ")
+				.append(map.getStaticLightsCount())
+				.append("\n");
+
+		sbuilder.append("\n");
+		sbuilder.append("[Drag] map with mouse\n");
+		sbuilder.append("[Doubleclick] to add/remove light\n");
+		sbuilder.append("[CTRL + Scroll] on light to change outer radius\n");
+		sbuilder.append("[SHIFT + Scroll] on light to change inner radius\n");
+		sbuilder.append("[Scroll] elsewhere to zoom\n");
+		sbuilder.append("[F2] to toggle darkness\n");
+		sbuilder.append("[F3] to center map\n");
+		sbuilder.append("[Arrows] to move player\n");
+		sbuilder.append("[R] to put player in random position\n");
+		sbuilder.append("[T] to put dynamic lights in random positions\n");
+
+		infoString = sbuilder.toString();
 	}
 
 	@Override
